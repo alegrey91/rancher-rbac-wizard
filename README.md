@@ -1,5 +1,5 @@
 <div align="center" style="padding-top: 20px">
-    <img src="/assets/rancher-rbac-wizard.jpg?raw=true" width="120" style="background-color: blue;">
+    <img src="/assets/rancher-rbac-wizard.jpg?raw=true" width="220" style="background-color: blue;">
 </div>
 
 # Rancher RBAC Wizard
