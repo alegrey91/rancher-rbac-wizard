@@ -28,14 +28,12 @@ import (
 
 	v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
-
-	//v1 "k8s.io/client-go/applyconfigurations/flowcontrol/v1"
-	v1 "k8s.io/api/rbac/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -119,10 +117,6 @@ func (app App) GetBindings() (*Bindings, error) {
 			grbs.Items[i] = *bindingObj
 		}
 	}
-	fmt.Println("[GlobalRoleBindings]")
-	for _, grb := range grbs.Items {
-		fmt.Println(grb.Name)
-	}
 
 	if prtbUnstructured != nil {
 		prtbs.Items = make([]v3.ProjectRoleTemplateBinding, len(prtbUnstructured.Items))
@@ -135,10 +129,6 @@ func (app App) GetBindings() (*Bindings, error) {
 			prtbs.Items[i] = *bindingObj
 		}
 	}
-	fmt.Println("[ProjectRoleTemplateBindings]")
-	for _, prtb := range prtbs.Items {
-		fmt.Println(prtb.Name)
-	}
 
 	if crtbUnstructured != nil {
 		crtbs.Items = make([]v3.ClusterRoleTemplateBinding, len(crtbUnstructured.Items))
@@ -150,10 +140,6 @@ func (app App) GetBindings() (*Bindings, error) {
 			}
 			crtbs.Items[i] = *bindingObj
 		}
-	}
-	fmt.Println("[ClusterRoleTemplateBindings]")
-	for _, crtb := range crtbs.Items {
-		fmt.Println(crtb.Name)
 	}
 
 	return &Bindings{
@@ -204,12 +190,12 @@ func GenerateData(bindings *Bindings) []Data {
 	for _, grb := range bindings.GlobalRoleBindings.Items {
 		grb.ManagedFields = nil
 		user := v1.Subject{
-			APIGroup: "management.cattle.io",
+			APIGroup: ManagementAPI,
 			Kind:     "User",
 			Name:     grb.UserName,
 		}
 		role := v1.RoleRef{
-			APIGroup: "management.cattle.io",
+			APIGroup: ManagementAPI,
 			Kind:     "GlobalRole",
 			Name:     grb.GlobalRoleName,
 		}
@@ -227,12 +213,17 @@ func GenerateData(bindings *Bindings) []Data {
 	for _, prtb := range bindings.ProjectRoleTemplateBindings.Items {
 		prtb.ManagedFields = nil
 		user := v1.Subject{
-			APIGroup: "management.cattle.io",
+			APIGroup: ManagementAPI,
 			Kind:     "User",
 			Name:     prtb.UserName,
 		}
-		role := v1.RoleRef{
-			APIGroup: "management.cattle.io",
+		roleProject := v1.RoleRef{
+			APIGroup: ManagementAPI,
+			Kind:     "Project",
+			Name:     prtb.ProjectName,
+		}
+		roleTemplate := v1.RoleRef{
+			APIGroup: ManagementAPI,
 			Kind:     "RoleTemplate",
 			Name:     prtb.RoleTemplateName,
 		}
@@ -241,7 +232,15 @@ func GenerateData(bindings *Bindings) []Data {
 			Id:       i,
 			Kind:     ProjectRoleTemplateBindingKind,
 			Subjects: []v1.Subject{user},
-			RoleRef:  role,
+			RoleRef:  roleProject,
+			Raw:      yamlParser(&prtb, ProjectRoleTemplateBindingKind, ProjectRoleTemplateBindingAPIVersion),
+		})
+		data = append(data, Data{
+			Name:     prtb.Name,
+			Id:       i,
+			Kind:     ProjectRoleTemplateBindingKind,
+			Subjects: []v1.Subject{user},
+			RoleRef:  roleTemplate,
 			Raw:      yamlParser(&prtb, ProjectRoleTemplateBindingKind, ProjectRoleTemplateBindingAPIVersion),
 		})
 		i++
@@ -250,12 +249,17 @@ func GenerateData(bindings *Bindings) []Data {
 	for _, crtb := range bindings.ClusterRoleTemplateBindings.Items {
 		crtb.ManagedFields = nil
 		user := v1.Subject{
-			APIGroup: "management.cattle.io",
+			APIGroup: ManagementAPI,
 			Kind:     "User",
 			Name:     crtb.UserName,
 		}
-		role := v1.RoleRef{
-			APIGroup: "management.cattle.io",
+		roleCluster := v1.RoleRef{
+			APIGroup: ManagementAPI,
+			Kind:     "Cluster",
+			Name:     crtb.ClusterName,
+		}
+		roleTemplate := v1.RoleRef{
+			APIGroup: ManagementAPI,
 			Kind:     "RoleTemplate",
 			Name:     crtb.RoleTemplateName,
 		}
@@ -264,7 +268,15 @@ func GenerateData(bindings *Bindings) []Data {
 			Id:       i,
 			Kind:     ClusterRoleTemplateBindingKind,
 			Subjects: []v1.Subject{user},
-			RoleRef:  role,
+			RoleRef:  roleCluster,
+			Raw:      yamlParser(&crtb, ClusterRoleTemplateBindingKind, ClusterRoleTemplateBindingAPIVersion),
+		})
+		data = append(data, Data{
+			Name:     crtb.Name,
+			Id:       i,
+			Kind:     ClusterRoleTemplateBindingKind,
+			Subjects: []v1.Subject{user},
+			RoleRef:  roleTemplate,
 			Raw:      yamlParser(&crtb, ClusterRoleTemplateBindingKind, ClusterRoleTemplateBindingAPIVersion),
 		})
 		i++
