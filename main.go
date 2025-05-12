@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/pehlicd/rbac-wizard/cmd"
+import "github.com/alegrey91/rancher-rbac-wizard/cmd"
 
 func main() {
 	cmd.Execute()

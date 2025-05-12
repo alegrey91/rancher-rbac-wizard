@@ -29,9 +29,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "rbac-wizard",
-	Short: "RBAC Wizard is a tool to visualize Kubernetes RBAC resources.",
-	Long:  `RBAC Wizard is a tool to visualize Kubernetes RBAC resources. It can be used to view and check the permissions relationships between RBAC objects.`,
+	Use:   "rancher-rbac-wizard",
+	Short: "Rancher RBAC Wizard is a tool to visualize Rancher Kubernetes RBAC resources.",
+	Long:  `Rancher RBAC Wizard is a tool to visualize Rancher Kubernetes RBAC resources. It can be used to view and check the permissions relationships between RBAC objects.`,
 }
 
 func Execute() {

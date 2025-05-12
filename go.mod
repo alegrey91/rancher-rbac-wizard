@@ -1,4 +1,4 @@
-module github.com/pehlicd/rbac-wizard
+module github.com/alegrey91/rancher-rbac-wizard
 
 go 1.24.3
 

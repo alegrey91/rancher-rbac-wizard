@@ -38,9 +38,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kyaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
-	"github.com/pehlicd/rbac-wizard/internal"
-	"github.com/pehlicd/rbac-wizard/internal/logger"
-	_ "github.com/pehlicd/rbac-wizard/internal/statik"
+	"github.com/alegrey91/rancher-rbac-wizard/internal"
+	"github.com/alegrey91/rancher-rbac-wizard/internal/logger"
+	_ "github.com/alegrey91/rancher-rbac-wizard/internal/statik"
 )
 
 // serveCmd represents the serve command
