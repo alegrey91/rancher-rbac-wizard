@@ -15,7 +15,7 @@ ERROR_COLOR   = \033[31;01m
 WARN_COLOR    = \033[33;01m
 
 # Directories
-APP_NAME      = rbac-wizard
+APP_NAME      = rancher-rbac-wizard
 BIN_DIR       = ./bin
 GO_BUILD      = $(BIN_DIR)/$(APP_NAME)
 
@@ -49,8 +49,12 @@ build-ui-and-embed: build-ui
 	@echo "$(OK_COLOR)==> Cleaning up UI build artifacts...$(NO_COLOR)"
 	rm -rf ./ui/dist
 
+copy-ui-artifacts:
+	@echo "$(OK_COLOR)==> Embedding UI files into Go application...$(NO_COLOR)"
+	cp -r ui/dist/ internal/embed/
+
 ## Build the Go backend and place the binary in bin directory
-build-backend:
+build-backend: copy-ui-artifacts
 	@echo "$(OK_COLOR)==> Building Go backend...$(NO_COLOR)"
 	mkdir -p $(BIN_DIR)
 	go build -o $(GO_BUILD)
