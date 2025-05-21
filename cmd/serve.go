@@ -28,7 +28,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/rakyll/statik/fs"
 	v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
@@ -38,9 +37,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kyaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
-	"github.com/alegrey91/rancher-rbac-wizard/internal"
+	embedfiles "github.com/alegrey91/rancher-rbac-wizard/internal/embed"
 	"github.com/alegrey91/rancher-rbac-wizard/internal/logger"
-	_ "github.com/alegrey91/rancher-rbac-wizard/internal/statik"
+	internal "github.com/alegrey91/rancher-rbac-wizard/internal/rrw"
 )
 
 // serveCmd represents the serve command
@@ -95,7 +94,7 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 	}
 
 	// Set up statik filesystem
-	statikFS, err := fs.New()
+	staticFS := http.FS(embedfiles.StaticFS)
 	if err != nil {
 		app.Logger.Fatal().Err(err).Msg("Failed to create statik filesystem")
 	}
@@ -108,10 +107,10 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 
 	// Set up handlers
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveStaticFiles(statikFS, w, r, "index.html")
+		serveStaticFiles(staticFS, w, r, "index.html")
 	})
 	mux.HandleFunc("/what-if", func(w http.ResponseWriter, r *http.Request) {
-		serveStaticFiles(statikFS, w, r, "what-if.html")
+		serveStaticFiles(staticFS, w, r, "what-if.html")
 	})
 	mux.HandleFunc("/api/data", serve.dataHandler)
 	mux.HandleFunc("/api/what-if", serve.whatIfHandler)
