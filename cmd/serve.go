@@ -103,7 +103,7 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 	// Set up embedded filesystem
 	uiFiles := http.FS(uiFS)
 	if err != nil {
-		app.Logger.Fatal().Err(err).Msg("Failed to create statik filesystem")
+		app.Logger.Fatal().Err(err).Msg("Failed to create embed filesystem")
 	}
 
 	// Set up CORS
@@ -128,7 +128,7 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 	startupMessage := fmt.Sprintf("Starting rancher-rbac-wizard on %s", fmt.Sprintf("http://localhost:%s", port))
 	fmt.Println(startupMessage)
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		app.Logger.Fatal().Err(err).Msg("Failed to create statik filesystem")
+		app.Logger.Fatal().Err(err).Msg("Failed to create embed filesystem")
 	}
 }
 
