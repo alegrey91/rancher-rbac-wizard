@@ -87,20 +87,21 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 		app.Logger.Fatal().Err(err).Msg("Failed to create Kubernetes client")
 	}
 
+	// Set up clients
 	app.KubeClient = kubeClient
 	app.DynamicClient = dynamicClient
-
 	serve := Serve{
 		app,
 	}
 
-	files, err := fs.Sub(embedfiles.StaticFS, "dist")
+	// define subtree directory
+	uiFS, err := fs.Sub(embedfiles.UIfs, "dist")
 	if err != nil {
 		app.Logger.Fatal().Err(err).Msg("Failed to find subtree in embedded directory")
 	}
 
-	// Set up statik filesystem
-	uiFS := http.FS(files)
+	// Set up embedded filesystem
+	uiFiles := http.FS(uiFS)
 	if err != nil {
 		app.Logger.Fatal().Err(err).Msg("Failed to create statik filesystem")
 	}
@@ -113,10 +114,10 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 
 	// Set up handlers
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveStaticFiles(uiFS, w, r, "index.html")
+		serveStaticFiles(uiFiles, w, r, "index.html")
 	})
 	mux.HandleFunc("/what-if", func(w http.ResponseWriter, r *http.Request) {
-		serveStaticFiles(uiFS, w, r, "what-if.html")
+		serveStaticFiles(uiFiles, w, r, "what-if.html")
 	})
 	mux.HandleFunc("/api/data", serve.dataHandler)
 	mux.HandleFunc("/api/what-if", serve.whatIfHandler)
@@ -150,7 +151,7 @@ func setupCors(port string) *cors.Cors {
 	})
 }
 
-func serveStaticFiles(statikFS http.FileSystem, w http.ResponseWriter, r *http.Request, defaultFile string) {
+func serveStaticFiles(staticFS http.FileSystem, w http.ResponseWriter, r *http.Request, defaultFile string) {
 	// Set cache control headers
 	cacheControllers(w)
 
@@ -159,10 +160,10 @@ func serveStaticFiles(statikFS http.FileSystem, w http.ResponseWriter, r *http.R
 		path = "/" + defaultFile
 	}
 
-	file, err := statikFS.Open(path)
+	file, err := staticFS.Open(path)
 	if err != nil {
 		// If the file is not found, serve the default file (index.html)
-		file, err = statikFS.Open("/" + defaultFile)
+		file, err = staticFS.Open("/" + defaultFile)
 		if err != nil {
 			http.NotFound(w, r)
 			return
