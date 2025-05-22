@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 
 	v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
@@ -93,8 +94,13 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 		app,
 	}
 
+	files, err := fs.Sub(embedfiles.StaticFS, "dist")
+	if err != nil {
+		app.Logger.Fatal().Err(err).Msg("Failed to find subtree in embedded directory")
+	}
+
 	// Set up statik filesystem
-	staticFS := http.FS(embedfiles.StaticFS)
+	uiFS := http.FS(files)
 	if err != nil {
 		app.Logger.Fatal().Err(err).Msg("Failed to create statik filesystem")
 	}
@@ -107,10 +113,10 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 
 	// Set up handlers
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveStaticFiles(staticFS, w, r, "index.html")
+		serveStaticFiles(uiFS, w, r, "index.html")
 	})
 	mux.HandleFunc("/what-if", func(w http.ResponseWriter, r *http.Request) {
-		serveStaticFiles(staticFS, w, r, "what-if.html")
+		serveStaticFiles(uiFS, w, r, "what-if.html")
 	})
 	mux.HandleFunc("/api/data", serve.dataHandler)
 	mux.HandleFunc("/api/what-if", serve.whatIfHandler)
@@ -118,10 +124,10 @@ func serve(port string, logging bool, logLevel string, logFormat string) {
 	handler := c.Handler(serve.App.LoggerMiddleware(mux))
 
 	// Start the server
-	startupMessage := fmt.Sprintf("Starting rbac-wizard on %s", fmt.Sprintf("http://localhost:%s", port))
+	startupMessage := fmt.Sprintf("Starting rancher-rbac-wizard on %s", fmt.Sprintf("http://localhost:%s", port))
 	fmt.Println(startupMessage)
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		fmt.Printf("Failed to start server: %v\n", err)
+		app.Logger.Fatal().Err(err).Msg("Failed to create statik filesystem")
 	}
 }
 
