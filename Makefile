@@ -18,6 +18,11 @@ WARN_COLOR    = \033[33;01m
 APP_NAME      = rancher-rbac-wizard
 BIN_DIR       = ./bin
 GO_BUILD      = $(BIN_DIR)/$(APP_NAME)
+TAG ?= dev
+DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+VERSION ?= $(if $(GITHUB_REF_NAME),$(GITHUB_REF_NAME),$(TAG))
+BUILD_LDFLAGS = -s -w -X github.com/alegrey91/rancher-rbac-wizard/cmd.versionString=$(VERSION) -X github.com/alegrey91/rancher-rbac-wizard/cmd.buildDate=$(DATE) -X github.com/alegrey91/rancher-rbac-wizard/cmd.buildCommit=$(COMMIT)
 
 # Main Targets
 .PHONY: run serve run-ui build-ui build-ui-and-embed build-backend fmt create-cluster delete-cluster deploy-ingress-nginx clean
@@ -54,7 +59,7 @@ copy-ui-artifacts:
 build-backend: copy-ui-artifacts
 	@echo "$(OK_COLOR)==> Building Go backend...$(NO_COLOR)"
 	mkdir -p $(BIN_DIR)
-	go build -o $(GO_BUILD)
+	go build -o $(GO_BUILD) -ldflags "$(BUILD_LDFLAGS)"
 
 ## Format Go code and tidy modules
 fmt:
